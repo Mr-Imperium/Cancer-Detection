@@ -1,4 +1,17 @@
 import streamlit as st
+import os
+import sys
+
+# Initialize session state for package installation
+if 'packages_installed' not in st.session_state:
+    st.session_state.packages_installed = False
+
+# Install required packages if not already installed
+if not st.session_state.packages_installed:
+    st.write("Installing required packages...")
+    os.system(f"{sys.executable} -m pip install torch==2.2.0 torchvision==0.17.0")
+    st.session_state.packages_installed = True
+
 import torch
 import torchvision.transforms as transforms
 from torchvision import models
@@ -16,12 +29,21 @@ st.set_page_config(
 # Model setup
 @st.cache_resource
 def load_model():
-    model = models.resnet34(pretrained=False)
+    model = models.resnet34(weights=None)  # Changed from pretrained=False
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, 2)
-    model.load_state_dict(torch.load('cancer_detection_model.pth', map_location=torch.device('cpu')))
-    model.eval()
-    return model
+    
+    # Handle model loading with error checking
+    try:
+        model.load_state_dict(torch.load('cancer_detection_model.pth', map_location=torch.device('cpu')))
+        model.eval()
+        return model
+    except FileNotFoundError:
+        st.error("Model file not found. Please ensure 'cancer_detection_model.pth' is in the same directory.")
+        return None
+    except Exception as e:
+        st.error(f"Error loading model: {str(e)}")
+        return None
 
 # Image preprocessing
 def preprocess_image(image):
@@ -37,12 +59,17 @@ def main():
     st.title("Cancer Image Detection")
     st.write("Upload a medical image for cancer detection")
     
+    # System info
+    st.sidebar.title("System Information")
+    st.sidebar.info(f"""
+    - Python Version: {sys.version.split()[0]}
+    - PyTorch Version: {torch.__version__}
+    - Device: {'cuda' if torch.cuda.is_available() else 'cpu'}
+    """)
+    
     # Load model
-    try:
-        model = load_model()
-        st.success("Model loaded successfully!")
-    except Exception as e:
-        st.error(f"Error loading model: {str(e)}")
+    model = load_model()
+    if model is None:
         return
     
     # File uploader
@@ -80,6 +107,7 @@ def main():
         
         except Exception as e:
             st.error(f"Error processing image: {str(e)}")
+            st.error("Stack trace:", exc_info=True)
 
 if __name__ == "__main__":
     main()
