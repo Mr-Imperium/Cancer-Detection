@@ -9,38 +9,37 @@ st.set_page_config(
 
 import os
 import sys
-
-# Initialize session state for package installation
-if 'packages_installed' not in st.session_state:
-    st.session_state.packages_installed = False
-
-# Install required packages if not already installed
-if not st.session_state.packages_installed:
-    st.write("Installing required packages...")
-    os.system(f"{sys.executable} -m pip install torch==2.2.0 torchvision==0.17.0")
-    st.session_state.packages_installed = True
-
 import torch
 import torchvision.transforms as transforms
 from torchvision import models
 import torch.nn as nn
 from PIL import Image
 import io
+from huggingface_hub import hf_hub_download
+import tempfile
 
 # Model setup
 @st.cache_resource
 def load_model():
-    model = models.resnet34(weights=None)
-    num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, 2)
-    
     try:
-        model.load_state_dict(torch.load('cancer_detection_model.pth', map_location=torch.device('cpu')))
+        # Create a temporary directory
+        temp_dir = tempfile.mkdtemp()
+        
+        # Initialize the model
+        model = models.resnet34(weights=None)
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Linear(num_ftrs, 2)
+        
+        # Download the model from Hugging Face
+        model_path = hf_hub_download(
+            repo_id="mrimperium/cancer-detection",  # Replace with your HF username
+            filename="cancer_detection_model.pth",
+        )
+        
+        # Load the model weights
+        model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
         model.eval()
         return model
-    except FileNotFoundError:
-        st.error("Model file not found. Please ensure 'cancer_detection_model.pth' is in the same directory.")
-        return None
     except Exception as e:
         st.error(f"Error loading model: {str(e)}")
         return None
@@ -57,9 +56,12 @@ def preprocess_image(image):
 # Main app
 def main():
     st.title("Cancer Image Detection")
-    st.write("Upload a medical image for cancer detection")
     
-    # System info
+    # Add model status message
+    status_placeholder = st.empty()
+    status_placeholder.info("Loading model... Please wait.")
+    
+    # System info in sidebar
     st.sidebar.title("System Information")
     st.sidebar.info(f"""
     - Python Version: {sys.version.split()[0]}
@@ -70,7 +72,11 @@ def main():
     # Load model
     model = load_model()
     if model is None:
+        status_placeholder.error("Failed to load model. Please try again later.")
         return
+    else:
+        status_placeholder.success("Model loaded successfully!")
+        st.write("Upload a medical image for cancer detection")
     
     # File uploader
     uploaded_file = st.file_uploader("Choose an image...", type=["tif"])
@@ -94,16 +100,22 @@ def main():
                         predicted_class = torch.argmax(probabilities).item()
                         confidence = probabilities[predicted_class].item() * 100
                     
+                    # Create columns for results
+                    col1, col2 = st.columns(2)
+                    
                     # Display results
-                    result = "Cancer Detected" if predicted_class == 1 else "No Cancer Detected"
-                    st.header(f"Result: {result}")
-                    st.subheader(f"Confidence: {confidence:.2f}%")
+                    with col1:
+                        result = "Cancer Detected" if predicted_class == 1 else "No Cancer Detected"
+                        st.header(f"Result: {result}")
+                        st.subheader(f"Confidence: {confidence:.2f}%")
                     
                     # Display probability bar chart
-                    st.bar_chart({
-                        "No Cancer": probabilities[0].item() * 100,
-                        "Cancer": probabilities[1].item() * 100
-                    })
+                    with col2:
+                        st.subheader("Probability Distribution")
+                        st.bar_chart({
+                            "No Cancer": probabilities[0].item() * 100,
+                            "Cancer": probabilities[1].item() * 100
+                        })
         
         except Exception as e:
             st.error(f"Error processing image: {str(e)}")
