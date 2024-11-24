@@ -140,8 +140,7 @@ Future improvements planned:
 
 ## License
 
-[Add your chosen license here]
-
+[MIT](https://github.com/Mr-Imperium/Cancer-Detection/blob/main/LICENSE)
 ## Acknowledgments
 
 - ResNet34 architecture from [torchvision](https://pytorch.org/vision/)
