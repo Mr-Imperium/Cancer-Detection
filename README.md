@@ -162,6 +162,6 @@ If you use this project in your research or work, please cite it as:
   author = {[Faraz Shamim]},
   title = {Cancer Detection Web Application},
   year = {2024},
-  url = {https://github.com/mr-imperium/cancer-detection-webapp}
+  url = {https://github.com/mr-imperium/cancer-detection}
 }
 ```
