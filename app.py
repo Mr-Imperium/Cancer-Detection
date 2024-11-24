@@ -1,4 +1,12 @@
 import streamlit as st
+
+# Set page config must be the first Streamlit command
+st.set_page_config(
+    page_title="Cancer Image Detection",
+    page_icon="🔬",
+    layout="wide"
+)
+
 import os
 import sys
 
@@ -19,21 +27,13 @@ import torch.nn as nn
 from PIL import Image
 import io
 
-# Set page config
-st.set_page_config(
-    page_title="Cancer Image Detection",
-    page_icon="🔬",
-    layout="wide"
-)
-
 # Model setup
 @st.cache_resource
 def load_model():
-    model = models.resnet34(weights=None)  # Changed from pretrained=False
+    model = models.resnet34(weights=None)
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, 2)
     
-    # Handle model loading with error checking
     try:
         model.load_state_dict(torch.load('cancer_detection_model.pth', map_location=torch.device('cpu')))
         model.eval()
