@@ -149,8 +149,10 @@ Future improvements planned:
 - Model hosting on [Hugging Face Hub](https://huggingface.co/)
 
 ## Screenshots
+![image](https://github.com/user-attachments/assets/961b0640-776d-4c82-9789-00375e1e3067)
+![image](https://github.com/user-attachments/assets/285576b8-d3df-4f0c-891e-366c641a796a)
+![image](https://github.com/user-attachments/assets/9877245c-1117-4239-a82d-bd94b314dd72)
 
-[Add screenshots of your application here]
 
 ## Citation
 
@@ -158,9 +160,9 @@ If you use this project in your research or work, please cite it as:
 
 ```bibtex
 @software{cancer_detection_webapp,
-  author = {[Your Name]},
+  author = {[Faraz Shamim]},
   title = {Cancer Detection Web Application},
   year = {2024},
-  url = {https://github.com/yourusername/cancer-detection-webapp}
+  url = {https://github.com/mr-imperium/cancer-detection-webapp}
 }
 ```
